@@ -1,39 +1,45 @@
-use clap::{Parser, Subcommand};
-mod convert;
+mod prompt;
 
-#[derive(Parser, Debug)]
-#[clap(author = "Adi", version = "0.0.1", about = "Shitty image converter")]
-struct Cli {
-    #[clap(subcommand)]
-    command: Commands,
+mod converter;
+
+use prompt::*;
+
+use converter::*;
+
+use std::io;
+
+use std::path::Path;
+
+fn run_cli() -> io::Result<()> {
+    println!("--- Image Converter ---");
+
+    println!(
+        "{} Enter an filepath (including filename & extension):",
+        ">"
+    );
+    let init_filepath_raw = prompt(validate_file_exists);
+
+    let _init_path = Path::new(&init_filepath_raw);
+
+    println!("{} Enter directory for exported file:", ">");
+    let out_dir_raw = prompt(validate_path_exists);
+
+    let out_dir = Path::new(&out_dir_raw);
+
+    println!("{} Enter name (with extension) of exported file:", ">");
+    let out_file_raw = prompt(validate_new_file);
+
+    let out_file = Path::new(&out_file_raw);
+
+    let out_filepath = out_dir.join(out_file);
+    let out_filepath_raw = out_filepath.to_string_lossy();
+
+    println!("{}", "Converting...");
+
+    let _img_result = export_file(&init_filepath_raw, &out_filepath_raw.to_string());
+
+    println!("{} {}", "Converted! output in:", out_dir.to_string_lossy());
+    Ok(())
 }
 
-#[derive(Subcommand, Debug)]
-enum Commands {
-    #[clap(
-        about = "img <SRC> <DEST> [--quality <QUALITY>]",
-        long_about = "Convert an image from png to jpg or viceversa."
-    )]
-    Img {
-        #[clap(value_name = "SRC", required = true)]
-        src: String,
-
-        #[clap(value_name = "DEST", required = true)]
-        dest: String,
-
-        /// Ajusta la calidad de la imagen de salida (1-100)
-        #[clap(short, long, default_value = "80", value_name = "QUALITY")]
-        quality: u8,
-    },
-}
-
-fn main() {
-    let cli = Cli::parse(); // Procesa los argumentos de línea de comandos
-
-    match &cli.command {
-        Commands::Img { src, dest, quality } => {
-            println!("Convirtiendo {} a {} con calidad {}%", src, dest, quality);
-            convert::convert_img(src, dest);
-        }
-    }
-}
+fn main() {}
